@@ -1,0 +1,56 @@
+package BSimReplication;
+
+import java.awt.Color;
+import java.util.Vector;
+import javax.vecmath.Vector3d;
+import bsim.BSim;
+import bsim.BSimTicker;
+import bsim.BSimP3DDrawer;
+
+public class BSimpReplication {
+
+    public static void main(String[] args) {
+        // Establecer propiedades de la simulación
+        BSim sim = new BSim();
+        sim.setDt(9.5);
+
+        // Configurar las bacterias
+        final Vector<BSimBacterium> bacterias = new Vector<BSimBacterium>();
+        final Vector<BSimBacterium> hijos = new Vector<BSimBacterium>();
+        
+        while (bacterias.size() < 1) {
+            BSimBacterium b = new BSimBacterium(sim, new Vector3d(Math.random() * sim.getBound().x, Math.random() * sim.getBound().y, Math.random()));
+            b.setRadius(1.0); // Establecer el radio inicial
+            b.setSurfaceAreaGrowthRate(0.95);
+            b.setChildList(hijos);
+            bacterias.add(b);
+        }
+
+        // Configurar el temporizador
+        sim.setTicker(new BSimTicker() {
+            @Override
+            public void tick() {
+                for (BSimBacterium b : bacterias) {
+                    b.action();
+                    b.updatePosition();
+                }
+                bacterias.addAll(hijos);
+                hijos.clear();
+            }
+        });
+
+        // Configurar el dibujante
+        BSimP3DDrawer drawer = new BSimP3DDrawer(sim, 800, 600) {
+            @Override
+            public void scene() {
+                for (BSimBacterium b : bacterias) {
+                    draw(b, Color.GREEN);
+                }
+            }
+        };
+        sim.setDrawer(drawer);
+
+        // Ejecutar la simulación
+        sim.preview();
+    }
+}
